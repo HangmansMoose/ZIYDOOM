@@ -1,0 +1,127 @@
+const std = @import("std");
+const Datatypes = @import("datatypes.zig");
+const WADDirectory = Datatypes.WADDirectory;
+const WADHeader = Datatypes.WADHeader;
+
+
+// Here I went back to the DOOM source (https://github.com/id-software/DOOM) 
+// to get a better understanding of how it was done without C++ streams
+
+pub const WADLoader = struct {
+    // wad_path: std.fs.Dir, // Directory where WADs are stored
+    wad_data: []u8 = undefined,
+    wad_file: std.fs.File = undefined,
+    wad_allocator: std.heap.GeneralPurposeAllocator(.{}),
+    wad_header: *WADHeader = undefined,
+    wad_directories: std.array_list.Managed(WADDirectory) = undefined,
+
+    pub fn init(wad_file_name: []const u8) !WADLoader 
+    {
+        _ = wad_file_name;
+        const cwd = std.fs.cwd();
+        var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+        const allocator = gpa.allocator();
+        const path_str = try cwd.realpathAlloc(allocator, ".");
+        std.debug.print("cwd: {s}\n", .{path_str});
+        // HACK: Hard-coding the WAD for now, need to make it a cmd line arg in the future
+        return .{
+            .wad_allocator = std.heap.GeneralPurposeAllocator(.{}){},
+        };
+    }
+
+    pub fn Load(self: *WADLoader) !void
+    {
+        const allocator = self.wad_allocator.allocator();
+        
+        const wad_rel_path = "assets/DOOM.WAD";
+        self.wad_file = try std.fs.cwd().openFile(wad_rel_path, .{});
+        defer self.wad_file.close();
+
+        self.wad_data = try allocator.alloc(u8, try self.wad_file.getEndPos());
+        self.wad_directories = std.array_list.Managed(WADDirectory).init(allocator);
+
+        // TODO: Look at errors and their implementation
+        try self.ReadInDirectories();
+        // try self.OpenAndLoadWAD();
+            
+        // try self.ReadDirectories();
+    }
+
+    fn ReadInDirectories(self: *WADLoader) !void
+    {
+        // Read in header
+        // NOTE: I dont need to store the header once the dirs are loaded I dont think I need to 
+        // care about the header anymore
+        var header_buffer: [@sizeOf(WADHeader)]u8 align(@alignOf(WADHeader)) = undefined;
+        _ = try self.wad_file.read(&header_buffer);
+
+        const header: *WADHeader = @ptrCast(&header_buffer);
+       
+        const wad_ident_str: []const u8 = @ptrCast(&header.wad_ident);
+        std.debug.print("WAD type: {s}\n", .{wad_ident_str});
+        std.debug.print("Dir count: {d}\n", .{header.directory_count});
+        std.debug.print("First dir offset: {d}\n", .{header.directory_offset});
+
+        for(0..header.directory_count) |i|
+        {
+            // TODO: not sure where the * 16 comes from. Need to go back through it
+            try self.ReadInDirectory(header.directory_offset + i * 16);
+        }
+
+    }
+
+    fn ReadInDirectory(self: *WADLoader, offset: usize) !void 
+    {
+        // const offset: u64 = self.wad_header.directory_offset;
+        var buffer: [@sizeOf(WADDirectory)]u8 align(@alignOf(WADDirectory)) = undefined;
+        _ = try self.wad_file.seekTo(offset); 
+        _ = try self.wad_file.read(&buffer);
+
+        const directory: *WADDirectory = @ptrCast(&buffer);
+        try self.wad_directories.append(directory.*);
+       
+        const dir_name_str: [:0]const u8 = @ptrCast(&directory.lump_name);
+        std.debug.print("Lump name: {s}\n", .{dir_name_str});
+        std.debug.print("Lump size: {d}\n", .{directory.lump_size});
+        std.debug.print("Lump offset: {d}\n", .{directory.lump_offset});
+    }
+
+    
+    //                  NOTE: LEAVING THIS HERE TO REMEBER WHAT I TRIED AND DIDNT WORK
+
+
+    // Need to remember to pass as a reference if I want to alter the struct, otherwise it is const and cant be altered
+    //fn OpenAndLoadWAD(self: *WADLoader) !void
+    //{
+    //    //read in header
+    //    const allocator = self.wad_allocator.allocator();
+    //    var file_reader = self.wad_file.reader(self.wad_data); 
+    //    const reader: *std.Io.Reader = &file_reader.interface;
+    //    const bytes_read = try reader.readAlloc(allocator, try self.wad_file.getEndPos()); 
+
+    //    _ = bytes_read;
+    //
+
+    //} 
+
+    //fn ReadDirectories(self: *WADLoader) !void 
+    //{
+    //    
+
+    //    var header: WADHeader = undefined;
+    //    // Add sentinal terminator
+    //    // NOTE: Will need to do this for the directory as well
+
+    //    try WADReader.ReadHeaderData(&self.wad_data, 0, &header);
+
+    //    // Terrible, but print is anus at the moment apparently, particularly on windows
+    //    //var print_buf: [1024]u8 = undefined;
+    //    //var output_writer: std.fs.File.Writer = std.fs.File.stdout().writer(&print_buf);
+    //    //const writer = &output_writer.interface;
+
+
+    //}
+};
+
+
+
