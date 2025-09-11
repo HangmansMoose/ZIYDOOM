@@ -7,6 +7,8 @@ Oh well, rip and tear...
 ##### This is a list of things I would like to improve once things are working
  - Allocators: This is probably an exellent use case for an arena allocator
  - Errors/Error checking: want to try to ensure that it wont panic, everything should be caught (probably naive)
+ - I can clean things up plenty in the wadloader, I am passing around the wad itself unecessarily when I can just
+   return data from the function and then store it in the WADLoader.
 
 ## DAY 1 - WAD Loading
 https://github.com/amroibrahim/DIYDoom/blob/master/DIYDoom/Notes001/notes/README.md 
@@ -123,3 +125,14 @@ Each mission is comprised of a set of lumps. These lumps are always in the same 
 |  6  | Blocks sound                             |
 |  7  | Never shows on automap                   |
 |  8  | Always shows on automap                  |
+
+#### Day 2 Goals
+ 1. Create a map class
+ 2. Read vertext data
+ 3. Read linedef data 
+
+
+#### NOTES (DELETE)
+so I think I do need to abstract out the reading functions into another namespace (struct without fields is just a namespace),
+otherwise I have to try to drag the wadloader everwhere and that feels bad. 
+
