@@ -2,55 +2,28 @@
 // not necessarily belonging to one
 
 // This enum is from DIYDOOM to avoid the use of magic numbers
-pub const EMAPLUMPSINDEX = enum(u32) {
-    eTHINGS = 1,
-    eLINEDEFS,
-    eSIDEDDEFS,
-    eVERTEXES,
-    eSEAGS,
-    eSSECTORS,
-    eNODES,
-    eSECTORS,
-    eREJECT,
-    eBLOCKMAP,
-    eCOUNT
-};
+pub const EMAPLUMPSINDEX = enum(u32) { eTHINGS = 1, eLINEDEFS, eSIDEDDEFS, eVERTEXES, eSEAGS, eSSECTORS, eNODES, eSECTORS, eREJECT, eBLOCKMAP, eCOUNT };
 
-pub const ELINEDEFFLAGS = enum(u32)
-{
-    eBLOCKING = 0,
-    eBLOCKMONSTERS = 1,
-    eTWOSIDED = 2,
-    eDONTPEGTOP = 4,
-    eDONTPEGBOTTOM = 8,
-    eSECRET = 16,
-    eSOUNDBLOCK = 32,
-    eDONTDRAW = 64,
-    eDRAW = 128
-};
+pub const ELINEDEFFLAGS = enum(u32) { eBLOCKING = 0, eBLOCKMONSTERS = 1, eTWOSIDED = 2, eDONTPEGTOP = 4, eDONTPEGBOTTOM = 8, eSECRET = 16, eSOUNDBLOCK = 32, eDONTDRAW = 64, eDRAW = 128 };
 
-pub const WADHeader = packed struct 
-{
+pub const WADHeader = extern struct {
     wad_type: u32, // Extra char for sentinel
     directory_count: u32,
     directory_offset: u32, // Offset to the first directory
 };
 
-pub const WADDirectory = packed struct 
-{
+pub const WADDirectory = extern struct {
     lump_offset: u32,
     lump_size: u32,
-    lump_name: u64 // Need an extra char for the sentinel
+    lump_name: u64, // Need an extra char for the sentinel
 };
 
-pub const Vertex = packed struct 
-{
+pub const Vertex = extern struct {
     x_pos: i16,
     y_pos: i16,
 };
 
-pub const Linedef = packed struct
-{
+pub const Linedef = extern struct {
     start_vertex: u16,
     end_vertex: u16,
     flags: u16,
